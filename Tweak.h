@@ -2,6 +2,7 @@
 #import <Foundation/Foundation.h>
 #import <UIKit/UIKit.h>
 #import <libhdev/HUtilities/HCommon.h>
+#import "settingsview/MNAUtil.h"
 #import "settingsview/MNASettingsViewController.h"
 #import "settingsview/MNAIntroViewController.h"
 
@@ -15,6 +16,13 @@
 @property (nonatomic, retain) UIView *sideSwitch; // new property
 @property (nonatomic, retain) UIImageView *imageView; // new property
 - (void)initEyeButton; // new method
+@end
+
+@interface MDSNavigationController : UINavigationController
+- (UIView *)view;
+@end
+
+@interface MSGContentSizeIgnoringTableView : UITableView
 @end
 
 @interface MDSSplitViewController : UIViewController
@@ -57,11 +65,31 @@
 @interface LSComposerComponentStackView : UIView
 @end
 
+@interface MDSGeneratedImageSpec : NSArray
+@end
+
+@interface MDSGeneratedImageView : UIImageView
+@property (nonatomic, strong, readwrite) MDSGeneratedImageSpec *spec;
+@end
+
+@interface MDSLabel : UILabel
+@end
+
+@interface LSMountableTableViewCell : UITableViewCell
+- (void)setMeasureFunction:(id)arg1;
+- (void)setLayoutSubviewsHook:(id)arg1;
+- (id)layoutSubviewsHook;
+- (id)measureFunction;
+@end
+
 @interface MSGListBinder : NSObject <UITableViewDelegate, UITableViewDataSource, UICollectionViewDelegateFlowLayout, UICollectionViewDataSource>
-@property (nonatomic, assign) BOOL didAddMNACellHeaderView;
+@property (retain, nonatomic) LSMountableTableViewCell *mnaCell;
 @end
 
 @interface LSContactListViewController : UIViewController {
   NSString *_featureIdentifier;
 }
+@end
+
+@interface LSTargetAction : NSObject
 @end
