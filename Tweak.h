@@ -19,6 +19,7 @@
 @end
 
 @interface MDSNavigationController : UINavigationController
+- (void)pushViewController:(id)arg1 animated:(BOOL)arg2;
 - (UIView *)view;
 @end
 
@@ -83,13 +84,9 @@
 @end
 
 @interface MSGListBinder : NSObject <UITableViewDelegate, UITableViewDataSource, UICollectionViewDelegateFlowLayout, UICollectionViewDataSource>
-@property (retain, nonatomic) LSMountableTableViewCell *mnaCell;
 @end
 
 @interface LSContactListViewController : UIViewController {
   NSString *_featureIdentifier;
 }
-@end
-
-@interface LSTargetAction : NSObject
 @end

@@ -54,114 +54,98 @@ extern "C" NSBundle *MessengerNoAdsBundle() {
 
 NSBundle *tweakBundle = MessengerNoAdsBundle();
 
+%group Settings
+static MDSNavigationController *controller = nil;
+static LSMountableTableViewCell *mnaCell = nil;
+
+%hook MDSNavigationController
+
+- (void)viewDidLoad {
+    %orig;
+    controller = self;
+}
+
+%end
+
+%hook LSMountableTableViewCell
+
+- (void)setBackgroundColor:(UIColor *)color {
+    %orig;
+    if (mnaCell.backgroundColor != color) mnaCell.backgroundColor = color;
+}
+
+%end
+
+%hook MSGListBinder
+
+- (LSMountableTableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
+    LSMountableTableViewCell *cell = %orig;
+    NSMutableSet *_registeredReuseIdentifiers = MSHookIvar<NSMutableSet *>(self, "_registeredReuseIdentifiers");
+    if ([_registeredReuseIdentifiers containsObject:@"me_setting_avatar_header"] && indexPath.row == 1) {
+        if (!mnaCell) {
+            mnaCell = [[%c(LSMountableTableViewCell) alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:@"MNASettings"];
+            mnaCell.layoutMargins = UIEdgeInsetsMake(0, 18, 0, 16);
+            mnaCell.frame = CGRectMake(20, 28, 374, 52);
+            mnaCell.layer.cornerRadius = 10;
+            mnaCell.accessibilityLabel = @"Advanced Settings";
+
+            mnaCell.imageView.image = [UIImage imageNamed:@"/Library/Application Support/MessengerNoAds.bundle/icon@3x.png"];
+
+            MDSLabel *label = [[%c(MDSLabel) alloc] initWithFrame:CGRectMake(62, 16, 409.0f / 3.0f, 58.0f / 3.0f)];
+            label.font = [UIFont systemFontOfSize:16];
+            label.text = @"Advanced Settings";
+
+            MDSGeneratedImageView *accessoryImage = [[%c(MDSGeneratedImageView) alloc] initWithFrame:CGRectMake(334, 13.5, 24, 25)];
+            NSArray *specColorType = @[@"MDSColorType", @0, @10082];
+            NSArray *specIconStyle = @[@"MDSGeneratedImageIconStyle", @0];
+            accessoryImage.spec = (MDSGeneratedImageSpec *)@[@"MDSGeneratedImageSpec", @9, @872221393, specColorType, specIconStyle];
+
+            [mnaCell addSubview:accessoryImage];
+            [mnaCell addSubview:label];
+        }
+        [mnaCell addGestureRecognizer:[[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(handleMNACellTap:)]];
+        [cell addSubview:mnaCell];
+    }
+    return cell;
+}
+
+- (CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath {
+    NSMutableSet *_registeredReuseIdentifiers = MSHookIvar<NSMutableSet *>(self, "_registeredReuseIdentifiers");
+    if ([_registeredReuseIdentifiers containsObject:@"me_setting_avatar_header"] && indexPath.row == 1) {
+        return 108;
+    }
+    return %orig;
+}
+
+- (void)tableView:(UITableView *)tableView didEndDisplayingCell:(LSMountableTableViewCell *)cell forRowAtIndexPath:(NSIndexPath *)indexPath {
+    NSMutableSet *_registeredReuseIdentifiers = MSHookIvar<NSMutableSet *>(self, "_registeredReuseIdentifiers");
+    if ([_registeredReuseIdentifiers containsObject:@"me_setting_avatar_header"] && indexPath.row == 1) {
+        mnaCell.hidden = YES;
+    }
+    %orig;
+}
+
+- (void)tableView:(UITableView *)tableView willDisplayCell:(LSMountableTableViewCell *)cell forRowAtIndexPath:(NSIndexPath *)indexPath {
+    NSMutableSet *_registeredReuseIdentifiers = MSHookIvar<NSMutableSet *>(self, "_registeredReuseIdentifiers");
+    if ([_registeredReuseIdentifiers containsObject:@"me_setting_avatar_header"] && indexPath.row == 1) {
+        mnaCell.hidden = NO;
+    }
+    %orig;
+}
+
+%new
+- (void)handleMNACellTap:(UITapGestureRecognizer *)recognizer {
+    MNASettingsViewController *settingsVC = [[MNASettingsViewController alloc] init];
+    [controller pushViewController:settingsVC animated:YES];
+}
+
+%end
+%end
+
 /**
 * Tweak's hooking code
 */
 %group CommonGroup
-
-%hook LSAppDelegate
-static LSAppDelegate *__weak sharedInstance;
-
-- (void)applicationDidBecomeActive:(id)arg1 {
-    %orig;
-    sharedInstance = self;
-}
-
-%new
-+ (id)sharedInstance {
-    return sharedInstance;
-}
-
-%end
-
-%hook MSGSplitViewController
-%property (nonatomic, retain) UIView *sideSwitch;
-%property (nonatomic, retain) UIImageView *imageView;
-
-- (void)viewDidAppear:(BOOL)arg1 {
-    %orig;
-    if (!hasCompletedIntroduction) {
-        [self presentViewController:[MNAIntroViewController new] animated:YES completion:nil];
-    }
-}
-
-- (void)viewDidLoad {
-    %orig;
-    if (showTheEyeButton) {
-        [self initEyeButton];
-    }
-}
-
-%new
-- (void)initEyeButton {
-    self.sideSwitch = [[UIView alloc] initWithFrame:CGRectMake(self.view.frame.size.width - 50, self.view.frame.size.height / 2 - 60, 50, 50)];
-    self.sideSwitch.backgroundColor = [[UIColor grayColor] colorWithAlphaComponent:0.3];
-    self.sideSwitch.layer.cornerRadius = 10;
-    self.imageView = [[UIImageView alloc] initWithFrame:CGRectMake(10, 10, 30, 30)];
-    self.imageView.contentMode = UIViewContentModeScaleAspectFit;
-    self.imageView.image = [UIImage imageWithContentsOfFile:[NSString stringWithFormat:@"%@/%@", @PREF_BUNDLE_PATH, disablereadreceipt ? @"no-see.png" : @"see.png"]];
-    self.imageView.alpha = 0.8;
-    [self.sideSwitch addSubview:self.imageView];
-    UITapGestureRecognizer *sideSwitchTap = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(handleSideSwitchTap:)];
-    [self.sideSwitch addGestureRecognizer:sideSwitchTap];
-    [self.view addSubview:self.sideSwitch];
-    UIPanGestureRecognizer *panRecognizer = [[UIPanGestureRecognizer alloc] initWithTarget:self action:@selector(move:)];
-    [panRecognizer setMinimumNumberOfTouches:1];
-    [panRecognizer setMaximumNumberOfTouches:1];
-    [self.sideSwitch addGestureRecognizer:panRecognizer];
-}
-
-%new
-- (void)handleSideSwitchTap:(UITapGestureRecognizer *)recognizer {
-    [settings setObject:[NSNumber numberWithBool:!disablereadreceipt] forKey:@"disablereadreceipt"];
-    BOOL success = [settings writeToFile:plistPath atomically:YES];
-    if (!success) {
-        //[HCommon showAlertMessage:@"Can't write file" withTitle:@"Error" viewController:nil];
-    } else {
-        self.imageView.image = [UIImage imageWithContentsOfFile:[NSString stringWithFormat:@"%@/%@", @PREF_BUNDLE_PATH, !disablereadreceipt ? @"no-see.png" : @"see.png"]];
-        notify_post(PREF_CHANGED_NOTIF);
-    }
-}
-
-%new
-- (void)move:(UIPanGestureRecognizer *)sender {
-    // Thanks for this post: https://stackoverflow.com/questions/6672677/how-to-use-uipangesturerecognizer-to-move-object-iphone-ipad
-    [self.view bringSubviewToFront:sender.view];
-    CGPoint translatedPoint = [sender translationInView:sender.view.superview];
-    if (sender.state == UIGestureRecognizerStateBegan) {
-        // firstX = sender.view.center.x;
-        // firstY = sender.view.center.y;
-    }
-    translatedPoint = CGPointMake(sender.view.center.x + translatedPoint.x, sender.view.center.y + translatedPoint.y);
-    [sender.view setCenter:translatedPoint];
-    [sender setTranslation:CGPointZero inView:sender.view];
-    if (sender.state == UIGestureRecognizerStateEnded) {
-        CGFloat velocityX = (0.2 * [sender velocityInView:self.view].x);
-        CGFloat velocityY = (0.2 * [sender velocityInView:self.view].y);
-        CGFloat finalX = translatedPoint.x + velocityX;
-        CGFloat finalY = translatedPoint.y + velocityY;
-        if (finalX < self.view.frame.size.width / 2) {
-            finalX = 0 + sender.view.frame.size.width / 2;
-        } else {
-            finalX = self.view.frame.size.width - sender.view.frame.size.width / 2;
-        }
-        if (finalY < 50) { // to avoid status bar
-            finalY = 50;
-        } else if (finalY > self.view.frame.size.height - 75) { // avoid bottom tab
-            finalY = self.view.frame.size.height - 75;
-        }
-        CGFloat animationDuration = (ABS(velocityX) * 0.0002) + 0.2;
-        [UIView beginAnimations:nil context:NULL];
-        [UIView setAnimationDuration:animationDuration];
-        [UIView setAnimationCurve:UIViewAnimationCurveEaseOut];
-        [UIView setAnimationDelegate:self];
-        [UIView setAnimationDidStopSelector:@selector(animationDidFinish)];
-        [[sender view] setCenter:CGPointMake(finalX, finalY)];
-        [UIView commitAnimations];
-    }
-}
-
-%end
 
 %hook MDSSplitViewController
 %property (nonatomic, retain) UIView *sideSwitch;
@@ -217,10 +201,6 @@ static LSAppDelegate *__weak sharedInstance;
     // Thanks for this post: https://stackoverflow.com/questions/6672677/how-to-use-uipangesturerecognizer-to-move-object-iphone-ipad
     [self.view bringSubviewToFront:sender.view];
     CGPoint translatedPoint = [sender translationInView:sender.view.superview];
-    if (sender.state == UIGestureRecognizerStateBegan) {
-        // firstX = sender.view.center.x;
-        // firstY = sender.view.center.y;
-    }
     translatedPoint = CGPointMake(sender.view.center.x + translatedPoint.x, sender.view.center.y + translatedPoint.y);
     [sender.view setCenter:translatedPoint];
     [sender setTranslation:CGPointZero inView:sender.view];
@@ -248,71 +228,6 @@ static LSAppDelegate *__weak sharedInstance;
         [[sender view] setCenter:CGPointMake(finalX, finalY)];
         [UIView commitAnimations];
     }
-}
-
-%end
-
-%hook MSGListBinder
-%property (retain, nonatomic) LSMountableTableViewCell *mnaCell;
-
-- (LSMountableTableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
-    LSMountableTableViewCell *cell = %orig;
-    NSMutableSet *_registeredReuseIdentifiers = MSHookIvar<NSMutableSet *>(self, "_registeredReuseIdentifiers");
-    if ([_registeredReuseIdentifiers containsObject:@"me_setting_avatar_header"] && indexPath.row == 1) {
-        if (self.mnaCell) [self.mnaCell removeFromSuperview];
-        self.mnaCell = [[%c(LSMountableTableViewCell) alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:@"MNASettings"];
-        [self.mnaCell addGestureRecognizer:[[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(handleMNACellTap:)]];
-        self.mnaCell.frame = CGRectMake(20, 28, 374, 52);
-        self.mnaCell.layoutMargins = UIEdgeInsetsMake(0, 18, 0, 16/*24*/);
-        self.mnaCell.layer.cornerRadius = 10;
-        self.mnaCell.accessibilityLabel = @"Advanced Settings";
-        //self.mnaCell.backgroundColor = /*isDarkMode ? */[UIColor colorWithWhite:1 alpha: 0.078];// : [UIColor whiteColor];
-
-        self.mnaCell.imageView.image = [UIImage imageNamed:@"/Library/Application Support/MessengerNoAds.bundle/icon-dark@3x.png"];
-
-        MDSLabel *label = [[%c(MDSLabel) alloc] initWithFrame:CGRectMake(62, 16, 409.0f / 3.0f, 58.0f / 3.0f)];
-        label.font = [UIFont systemFontOfSize:16];
-        label.text = @"Advanced Settings";
-
-        MDSGeneratedImageView *accessoryImage = [[%c(MDSGeneratedImageView) alloc] initWithFrame:CGRectMake(334, 13.5, 24, 25)];
-        NSArray *specColorType = @[@"MDSColorType", @0, @10082];
-        NSArray *specIconStyle = @[@"MDSGeneratedImageIconStyle", @0];
-        accessoryImage.spec = (MDSGeneratedImageSpec *)@[@"MDSGeneratedImageSpec", @9, @872221393, specColorType, specIconStyle];
-
-        [self.mnaCell addSubview:accessoryImage];
-        [self.mnaCell addSubview:label];
-        [cell addSubview:self.mnaCell];
-    }
-
-    self.mnaCell.backgroundColor = [UIColor colorWithWhite:1 alpha: 0.078];
-    return cell;
-}
-
-- (CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath {
-    NSMutableSet *_registeredReuseIdentifiers = MSHookIvar<NSMutableSet *>(self, "_registeredReuseIdentifiers");
-    if ([_registeredReuseIdentifiers containsObject:@"me_setting_avatar_header"] && indexPath.row == 1) {
-        return 108;
-    }
-    return %orig;
-}
-
-- (void)tableView:(UITableView *)tableView didEndDisplayingCell:(LSMountableTableViewCell *)cell forRowAtIndexPath:(NSIndexPath *)indexPath {
-    NSMutableSet *_registeredReuseIdentifiers = MSHookIvar<NSMutableSet *>(self, "_registeredReuseIdentifiers");
-    if ([_registeredReuseIdentifiers containsObject:@"me_setting_avatar_header"] && indexPath.row == 1) {
-        self.mnaCell.hidden = YES;
-    }
-    %orig;
-}
-
-%new
-- (void)handleMNACellTap:(UITapGestureRecognizer *)recognizer {
-    MNASettingsViewController *settingsVC = [[MNASettingsViewController alloc] init];
-    UINavigationController *navVC = [[UINavigationController alloc] initWithRootViewController:settingsVC];
-    //if (![HCommon isNotch]) {
-        navVC.modalPresentationStyle = UIModalPresentationFullScreen;
-    //}
-
-    [[%c(LSAppDelegate) sharedInstance] presentViewController:navVC animated:true completion:nil];
 }
 
 %end
@@ -511,6 +426,7 @@ static LSAppDelegate *__weak sharedInstance;
 
     dlopen([[[NSBundle mainBundle].bundlePath stringByAppendingPathComponent:@"Frameworks/NotInCore.framework/NotInCore"] UTF8String], RTLD_NOW);
 
+    %init(Settings);
     %init(CommonGroup);
     %init(NoAdsNoStoriesRow);
     %init(DisableReadReceipt);
