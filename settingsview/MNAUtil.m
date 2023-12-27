@@ -1,18 +1,7 @@
-#import "MNAUtil.h"
-#import <RemoteLog.h>
-
-extern NSBundle *MessengerNoAdsBundle();
-
-static inline NSString *LOC(NSString *key) {
-    NSBundle *tweakBundle = MessengerNoAdsBundle();
-    return [tweakBundle localizedStringForKey:key value:nil table:nil];
-}
+#include "UtilityFunctions.h"
+#include "MNAUtil.h"
 
 @implementation MNAUtil
-
-+ (NSString *)localizedItem:(NSString *)key {
-    return LOC(key); //[HCommon localizedItem:key bundlePath:@PREF_BUNDLE_PATH];
-}
 
 + (void)showRequireRestartAlert:(UIViewController *)vc {
     __block UIWindow* topWindow;
@@ -21,8 +10,8 @@ static inline NSString *LOC(NSString *key) {
         topWindow.rootViewController = [UIViewController new];
         topWindow.windowLevel = UIWindowLevelAlert + 1;
     }
-    UIAlertController* alert = [UIAlertController alertControllerWithTitle:[MNAUtil localizedItem:@"APP_RESTART_REQUIRED"] message:[MNAUtil localizedItem:@"DO_YOU_REALLY_WANT_TO_KILL_MESSENGER"] preferredStyle:UIAlertControllerStyleAlert];
-    [alert addAction:[UIAlertAction actionWithTitle:[MNAUtil localizedItem:@"CONFIRM"] style:UIAlertActionStyleDestructive handler:^(UIAlertAction * _Nonnull action) {
+    UIAlertController* alert = [UIAlertController alertControllerWithTitle:LOC(@"APP_RESTART_REQUIRED") message:LOC(@"DO_YOU_REALLY_WANT_TO_KILL_MESSENGER") preferredStyle:UIAlertControllerStyleAlert];
+    [alert addAction:[UIAlertAction actionWithTitle:LOC(@"CONFIRM") style:UIAlertActionStyleDestructive handler:^(UIAlertAction * _Nonnull action) {
         if (!vc) {
             topWindow.hidden = YES;
             topWindow = nil;
@@ -30,7 +19,7 @@ static inline NSString *LOC(NSString *key) {
         exit(0);
     }]];
 
-    [alert addAction:[UIAlertAction actionWithTitle:[MNAUtil localizedItem:@"CANCEL"] style:UIAlertActionStyleCancel handler:^(UIAlertAction * _Nonnull action) {
+    [alert addAction:[UIAlertAction actionWithTitle:LOC(@"CANCEL") style:UIAlertActionStyleCancel handler:^(UIAlertAction * _Nonnull action) {
         if (!vc) {
             topWindow.hidden = YES;
             topWindow = nil;

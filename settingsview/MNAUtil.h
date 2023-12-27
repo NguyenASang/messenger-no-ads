@@ -1,4 +1,3 @@
-#import <libhdev/HUtilities/HCommon.h>
 
 #define TWEAK_TITLE "Messenger No Ads"
 #define PREF_BUNDLE_PATH "/Library/Application Support/MessengerNoAds.bundle"
@@ -8,7 +7,6 @@
 #define KTINT_COLOR_DARKMODE "#B787FF" // don't know what looks good, better let it be the same with white mode
 
 @interface MNAUtil : NSObject
-+ (NSString *)localizedItem:(NSString *)key;
 + (void)showRequireRestartAlert:(UIViewController *)vc;
 + (NSString *)getPlistPath;
 + (NSMutableDictionary *)getCurrentSettingsFromPlist;

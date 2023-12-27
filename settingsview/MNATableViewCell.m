@@ -1,4 +1,4 @@
-#import "ColorFunctions.h"
+#import "UtilityFunctions.h"
 #import "MNATableViewCell.h"
 
 #define LABEL_COLOR "#333333"

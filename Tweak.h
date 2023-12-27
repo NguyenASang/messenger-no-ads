@@ -1,10 +1,9 @@
-#include <dlfcn.h>
+#import <dlfcn.h>
 #import <Foundation/Foundation.h>
 #import <UIKit/UIKit.h>
-#import <libhdev/HUtilities/HCommon.h>
-#import "settingsview/MNAUtil.h"
-#import "settingsview/MNASettingsViewController.h"
-#import "settingsview/MNAIntroViewController.h"
+#include "settingsview/MNAIntroViewController.h"
+#include "settingsview/MNASettingsViewController.h"
+#include "settingsview/MNAUtil.h"
 
 @interface LSAppDelegate : NSObject
 + (id)sharedInstance; // new methods
@@ -87,6 +86,6 @@
 @end
 
 @interface LSContactListViewController : UIViewController {
-  NSString *_featureIdentifier;
+    NSString *_featureIdentifier;
 }
 @end

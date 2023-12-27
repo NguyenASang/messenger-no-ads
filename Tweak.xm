@@ -1,7 +1,5 @@
-#import <rootless.h>
-#import <RemoteLog.h>
-//#import "settingsview/ColorFunctions.h"
 #include "Tweak.h"
+#include "UtilityFunctions.h"
 
 /**
 * Load Preferences
@@ -39,24 +37,9 @@ static void reloadPrefs() {
     extendStoryVideoUploadLength = [[settings objectForKey:@"extendStoryVideoUploadLength"] ?: @(YES) boolValue];
 }
 
-extern "C" NSBundle *MessengerNoAdsBundle() {
-    static NSBundle *bundle = nil;
-    static dispatch_once_t onceToken;
-    dispatch_once(&onceToken, ^{
-        NSString *tweakBundlePath = [[NSBundle mainBundle] pathForResource:@"MessengerNoAds" ofType:@"bundle"];
-        if (tweakBundlePath)
-            bundle = [NSBundle bundleWithPath:tweakBundlePath];
-        else
-            bundle = [NSBundle bundleWithPath:ROOT_PATH_NS("/Library/Application Support/MessengerNoAds.bundle")];
-    });
-    return bundle;
-}
-
-NSBundle *tweakBundle = MessengerNoAdsBundle();
-
 %group Settings
-static MDSNavigationController *controller = nil;
 static LSMountableTableViewCell *mnaCell = nil;
+static MDSNavigationController *controller = nil;
 
 %hook MDSNavigationController
 
@@ -69,6 +52,7 @@ static LSMountableTableViewCell *mnaCell = nil;
 
 %hook LSMountableTableViewCell
 
+//TODO: Find a better way
 - (void)setBackgroundColor:(UIColor *)color {
     %orig;
     if (mnaCell.backgroundColor != color) mnaCell.backgroundColor = color;
@@ -88,8 +72,7 @@ static LSMountableTableViewCell *mnaCell = nil;
             mnaCell.frame = CGRectMake(20, 28, 374, 52);
             mnaCell.layer.cornerRadius = 10;
             mnaCell.accessibilityLabel = @"Advanced Settings";
-
-            mnaCell.imageView.image = [UIImage imageNamed:@"/Library/Application Support/MessengerNoAds.bundle/icon@3x.png"];
+            mnaCell.imageView.image = IMAGE(@"icon@3x");
 
             MDSLabel *label = [[%c(MDSLabel) alloc] initWithFrame:CGRectMake(62, 16, 409.0f / 3.0f, 58.0f / 3.0f)];
             label.font = [UIFont systemFontOfSize:16];
@@ -170,18 +153,18 @@ static LSMountableTableViewCell *mnaCell = nil;
     self.sideSwitch = [[UIView alloc] initWithFrame:CGRectMake(self.view.frame.size.width - 50, self.view.frame.size.height / 2 - 60, 50, 50)];
     self.sideSwitch.backgroundColor = [[UIColor grayColor] colorWithAlphaComponent:0.3];
     self.sideSwitch.layer.cornerRadius = 10;
-    self.imageView = [[UIImageView alloc] initWithFrame:CGRectMake(10, 10, 30, 30)];
-    self.imageView.contentMode = UIViewContentModeScaleAspectFit;
-    self.imageView.image = [UIImage imageWithContentsOfFile:[NSString stringWithFormat:@"%@/%@", @PREF_BUNDLE_PATH, disablereadreceipt ? @"no-see.png" : @"see.png"]];
-    self.imageView.alpha = 0.8;
-    [self.sideSwitch addSubview:self.imageView];
-    UITapGestureRecognizer *sideSwitchTap = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(handleSideSwitchTap:)];
-    [self.sideSwitch addGestureRecognizer:sideSwitchTap];
-    [self.view addSubview:self.sideSwitch];
+    [self.sideSwitch addGestureRecognizer:[[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(handleSideSwitchTap:)]];
     UIPanGestureRecognizer *panRecognizer = [[UIPanGestureRecognizer alloc] initWithTarget:self action:@selector(move:)];
-    [panRecognizer setMinimumNumberOfTouches:1];
-    [panRecognizer setMaximumNumberOfTouches:1];
+    //[panRecognizer setMaximumNumberOfTouches:1];
     [self.sideSwitch addGestureRecognizer:panRecognizer];
+
+    self.imageView = [[UIImageView alloc] initWithFrame:CGRectMake(10, 10, 30, 30)];
+    self.imageView.image = disablereadreceipt ? IMAGE(@"no-see") : IMAGE(@"see");
+    self.imageView.contentMode = UIViewContentModeScaleAspectFit;
+    self.imageView.alpha = 0.8;
+
+    [self.sideSwitch addSubview:self.imageView];
+    [self.view addSubview:self.sideSwitch];
 }
 
 %new
@@ -191,7 +174,7 @@ static LSMountableTableViewCell *mnaCell = nil;
     if (!success) {
         //[HCommon showAlertMessage:@"Can't write file" withTitle:@"Error" viewController:nil];
     } else {
-        self.imageView.image = [UIImage imageWithContentsOfFile:[NSString stringWithFormat:@"%@/%@", @PREF_BUNDLE_PATH, !disablereadreceipt ? @"no-see.png" : @"see.png"]];
+        self.imageView.image = [UIImage imageWithContentsOfFile:[NSString stringWithFormat:@"%@/%@", @PREF_BUNDLE_PATH, !disablereadreceipt ? @"no-see" : @"see"]];
         notify_post(PREF_CHANGED_NOTIF);
     }
 }
@@ -337,14 +320,14 @@ static LSMountableTableViewCell *mnaCell = nil;
 
 - (void)_handleOverflowMenuButton:(UIButton *)arg1 {
     if (!cansavefriendsstory) {
-        %orig;
-        return;
+        return %orig;
     }
+
     // check if this story is mine
     if ([self.storyAuthorId isEqualToString:[[%c(LSAppDelegate) sharedInstance] getCurrentLoggedInUserId]]) {
-        %orig;
-        return;
+        return %orig;
     }
+
     // otherwise show alert with save and original actions
     LSStoryOverlayViewController *overlayVC = (LSStoryOverlayViewController *)[[[self nextResponder] nextResponder] nextResponder];
     LSStoryBucketViewController *bucketVC = overlayVC.parentViewController;

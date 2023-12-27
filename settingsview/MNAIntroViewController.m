@@ -1,7 +1,5 @@
-#import "ColorFunctions.h"
-#import "MNAIntroViewController.h"
-
-extern NSBundle *MessengerNoAdsBundle();
+#include "MNAIntroViewController.h"
+#include "UtilityFunctions.h"
 
 @implementation MNAIntroViewController
 
@@ -30,8 +28,8 @@ extern NSBundle *MessengerNoAdsBundle();
 
     UIImageView *imageView = [[UIImageView alloc] initWithFrame:CGRectMake(30, 50, 100, 100)];
     imageView.contentMode = UIViewContentModeScaleAspectFit;
-    UIImage *introImg1 = [UIImage imageWithContentsOfFile:[NSString stringWithFormat:@"%@/%@", @PREF_BUNDLE_PATH, @"intro-image-1.png"]];
-    UIImage *introImg2 = [UIImage imageWithContentsOfFile:[NSString stringWithFormat:@"%@/%@", @PREF_BUNDLE_PATH, @"intro-image-2.png"]];
+    UIImage *introImg1 = IMAGE(@"intro-image-1");
+    UIImage *introImg2 = IMAGE(@"intro-image-2");
     imageView.animationImages = @[introImg1, introImg2];
     imageView.animationDuration = 0.8;
     [imageView startAnimating];
@@ -41,7 +39,7 @@ extern NSBundle *MessengerNoAdsBundle();
     center.y = center.y - 60 - 50;
     [headerLabel setCenter:center];
     headerLabel.textColor = [UIColor whiteColor];
-    headerLabel.text = [MNAUtil localizedItem:@"WELCOME_TO_MESSENGER_NO_ADS"];
+    headerLabel.text = LOC(@"WELCOME_TO_MESSENGER_NO_ADS");
     headerLabel.numberOfLines = 2;
     headerLabel.clipsToBounds = YES;
     headerLabel.textAlignment = NSTextAlignmentCenter;
@@ -52,7 +50,7 @@ extern NSBundle *MessengerNoAdsBundle();
     UILabel *introductionText = [[UILabel alloc] initWithFrame:CGRectMake(0, 0, self.view.frame.size.width - 60.0f, 60)];
     [introductionText setCenter:self.view.center];
     introductionText.textColor = [UIColor whiteColor];
-    introductionText.text = [MNAUtil localizedItem:@"INTRO_TEXT_GUIDE"];
+    introductionText.text = LOC(@"INTRO_TEXT_GUIDE");
     introductionText.numberOfLines = 2;
     introductionText.clipsToBounds = YES;
     introductionText.textAlignment = NSTextAlignmentCenter;
@@ -62,8 +60,8 @@ extern NSBundle *MessengerNoAdsBundle();
 
     UIButton *continueButton = [[UIButton alloc] initWithFrame:CGRectMake(self.view.center.x - 125, self.view.frame.size.height * 4 / 5 - 50, 250.0f, 50.0f)];
     [continueButton addTarget:self action:@selector(dismissIntroductionViewController) forControlEvents:UIControlEventTouchUpInside];
-    [continueButton setTitle:[MNAUtil localizedItem:@"CONFIRM"] forState:UIControlStateNormal];
-    continueButton.backgroundColor = colorWithHexString(@"#FE2E54");//[HCommon colorFromHex:@"#FE2E54"];
+    [continueButton setTitle:LOC(@"CONFIRM") forState:UIControlStateNormal];
+    continueButton.backgroundColor = colorWithHexString(@"#FE2E54");
     continueButton.titleLabel.font = [UIFont systemFontOfSize:17];
     continueButton.layer.cornerRadius = 10;
     [continueButton setTintColor: [UIColor blackColor]];
