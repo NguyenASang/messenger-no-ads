@@ -1,14 +1,16 @@
-#import "MNACellModel.h"
-#import "MNATableViewCell.h"
-#import "MNAUtil.h"
+#include "MNACellModel.h"
+#include "MNATableViewCell.h"
+#include "MNAUtil.h"
 
 @interface MNASettingsViewController : UIViewController <UITableViewDelegate, UITableViewDataSource> {
     UITableView *_tableView;
-    NSMutableArray *_tableData;
-    UIView *_headerView;
-    UIImageView *_headerImageView;
+    NSMutableArray *tableData;
+    UIView *headerView;
+    UIImageView *headerImageView;
     UILabel *titleLabel;
-    UIImageView *_iconView;
-    NSMutableDictionary *_originalSettings;
+    UIImageView *iconView;
+    NSMutableDictionary *originalSettings;
 }
+@property (nonatomic, assign) BOOL isDarkMode;
+- (instancetype)initWithFrame:(CGRect)frame isDarkMode:(BOOL)isDarkMode;
 @end

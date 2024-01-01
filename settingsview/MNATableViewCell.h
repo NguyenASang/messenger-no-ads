@@ -1,12 +1,12 @@
 #import <libhdev/HUtilities/HCommon.h>
 #import <notify.h>
-#import "MNAUtil.h"
 #import "MNACellModel.h"
+#import "MNAUtil.h"
 
 @interface MNATableViewCell : UITableViewCell {
-  MNACellModel *_cellData;
-  UIViewController *_vc;
-  NSString *_plistPath;
+    MNACellModel *_cellData;
+    NSString *_plistPath;
 }
-- (id)initWithData:(MNACellModel *)cellData reuseIdentifier:(NSString *)reuseIdentifier viewController:vc;
+@property (nonatomic, assign) BOOL isDarkMode;
+- (id)initWithData:(MNACellModel *)cellData reuseIdentifier:(NSString *)reuseIdentifier isDarkMode:(BOOL)isDarkMode;
 @end

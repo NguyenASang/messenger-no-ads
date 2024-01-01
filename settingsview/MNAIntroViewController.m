@@ -21,7 +21,7 @@
     [gradient setStartPoint:CGPointMake(0.0, -0.5)];
     [gradient setEndPoint:CGPointMake(1.0, 1.0)];
     //[gradient setColors:@[(id)[[HCommon colorFromHex:@KTINT_COLOR] CGColor], (id)[[UIColor whiteColor] CGColor]]];
-    [gradient setColors:@[(id)[colorWithHexString(@KTINT_COLOR) CGColor], (id)[[UIColor whiteColor] CGColor]]];
+    [gradient setColors:@[(id)[colorWithHexString(@"#B787FF") CGColor], (id)[[UIColor whiteColor] CGColor]]];
     [gradient setLocations:@[@0,@1]];
 
     [[[self view] layer] insertSublayer:gradient atIndex:0];

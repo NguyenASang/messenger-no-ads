@@ -1,33 +1,20 @@
-#import "UtilityFunctions.h"
 #import "MNATableViewCell.h"
-
-#define LABEL_COLOR "#333333"
-#define SUBTITLE_COLOR "#828282"
-#define STATIC_BACKGROUND_COLOR "#EFEFF4"
-#define CELL_BACKGROUND_COLOR "#FFFFFF"
-
-#define LABEL_COLOR_DARKMODE "#F2F2F2"
-#define SUBTITLE_COLOR_DARKMODE "#888888"
-#define STATIC_BACKGROUND_COLOR_DARKMODE "#000000"
-#define CELL_BACKGROUND_COLOR_DARKMODE "#1C1C1C"
-
-#define STATIC_FONT_SIZE 13.0
+#import "UtilityFunctions.h"
 
 @implementation MNATableViewCell
 
-- (id)initWithData:(MNACellModel *)cellData reuseIdentifier:(NSString *)reuseIdentifier viewController:vc {
+- (id)initWithData:(MNACellModel *)cellData reuseIdentifier:(NSString *)reuseIdentifier isDarkMode:(BOOL)isDarkMode {
     self = [super initWithStyle:UITableViewCellStyleSubtitle reuseIdentifier:reuseIdentifier];
     _cellData = cellData;
-    _vc = vc;
     _plistPath = [MNAUtil getPlistPath];
     if (self) {
+        self.isDarkMode = isDarkMode;
+
         self.textLabel.text = cellData.label;
-        self.textLabel.textColor = colorWithHexString(@LABEL_COLOR);
-        //self.textLabel.textColor = [HCommon colorFromHex:[HCommon isDarkMode] ? @LABEL_COLOR_DARKMODE : @LABEL_COLOR];
+        self.textLabel.textColor = self.isDarkMode ? colorWithHexString(@"#F2F2F2") : colorWithHexString(@"#333333");
         self.selectionStyle = UITableViewCellSelectionStyleNone;
         self.detailTextLabel.text = cellData.subtitle;
-        self.detailTextLabel.textColor = colorWithHexString(@SUBTITLE_COLOR);
-        //self.detailTextLabel.textColor = [HCommon colorFromHex:[HCommon isDarkMode] ? @SUBTITLE_COLOR_DARKMODE : @SUBTITLE_COLOR];
+        self.detailTextLabel.textColor = self.isDarkMode ? colorWithHexString(@"#888888") : colorWithHexString(@"#828282");
         if (cellData.disabled) {
             self.userInteractionEnabled = NO;
             self.textLabel.enabled = NO;
@@ -47,9 +34,8 @@
             }
 
             case StaticText: {
-                self.textLabel.font=[UIFont systemFontOfSize:STATIC_FONT_SIZE];
-                self.contentView.backgroundColor = colorWithHexString(@STATIC_BACKGROUND_COLOR);
-                //self.contentView.backgroundColor = [HCommon colorFromHex:[HCommon isDarkMode] ? @STATIC_BACKGROUND_COLOR_DARKMODE : @STATIC_BACKGROUND_COLOR];
+                self.textLabel.font=[UIFont systemFontOfSize:13];
+                self.contentView.backgroundColor = self.isDarkMode ? colorWithHexString(@"#000000") : colorWithHexString(@"#EFEFF4");
                 break;
             }
 
@@ -77,12 +63,10 @@
     [super setHighlighted:highlighted animated:animated];
     if (highlighted) {
         if (self.selectionStyle != UITableViewCellSelectionStyleNone) {
-            self.contentView.superview.backgroundColor = [colorWithHexString(@KTINT_COLOR) colorWithAlphaComponent:0.3];
-            //self.contentView.superview.backgroundColor = [[HCommon colorFromHex:@KTINT_COLOR] colorWithAlphaComponent:0.3];
+            self.contentView.superview.backgroundColor = [colorWithHexString(@"#B787FF") colorWithAlphaComponent:0.3];
         }
     } else {
-        self.contentView.superview.backgroundColor = colorWithHexString(@CELL_BACKGROUND_COLOR);
-        //self.contentView.superview.backgroundColor = [HCommon colorFromHex:[HCommon isDarkMode] ? @CELL_BACKGROUND_COLOR_DARKMODE : @CELL_BACKGROUND_COLOR];
+        self.contentView.superview.backgroundColor = self.isDarkMode ? colorWithHexString(@"#1C1C1C") : colorWithHexString(@"#FFFFFF");
     }
 }
 
@@ -90,12 +74,10 @@
     [super setSelected:selected animated:animated];
     if (selected) {
         if (self.selectionStyle != UITableViewCellSelectionStyleNone) {
-            self.contentView.superview.backgroundColor = [colorWithHexString(@KTINT_COLOR) colorWithAlphaComponent:0.3];
-            //self.contentView.superview.backgroundColor = [[HCommon colorFromHex:@KTINT_COLOR] colorWithAlphaComponent:0.3];
+            self.contentView.superview.backgroundColor = [colorWithHexString(@"#B787FF") colorWithAlphaComponent:0.3];
         }
     } else {
-        self.contentView.superview.backgroundColor = colorWithHexString(@CELL_BACKGROUND_COLOR);
-        //self.contentView.superview.backgroundColor = [HCommon colorFromHex:[HCommon isDarkMode] ? @CELL_BACKGROUND_COLOR_DARKMODE : @CELL_BACKGROUND_COLOR];
+        self.contentView.superview.backgroundColor = self.isDarkMode ? colorWithHexString(@"#1C1C1C") : colorWithHexString(@"#FFFFFF");
     }
 }
 
@@ -108,11 +90,7 @@
         //[HCommon showAlertMessage:@"Can't write file" withTitle:@"Error" viewController:nil];
     } else {
         notify_post(PREF_CHANGED_NOTIF);
-
-    // if (_cellData.isRestartRequired) {
-    //   [MNAUtil showRequireRestartAlert:_vc];
-    // }
-  }
+    }
 }
 
 - (id)readPreferenceValueForKey:(NSString *)prefKey {

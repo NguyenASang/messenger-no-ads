@@ -2,8 +2,8 @@
 // Author: Timothy Oliver
 // Maintainer: NguyenASang
 
-#include "Headers/TOInsetGroupedTableView.h"
-#include "Headers/UtilityFunctions.h"
+#include "TOInsetGroupedTableView.h"
+#include "UtilityFunctions.h"
 
 /**
  The KVO key we'll be using to detect when the table view

@@ -1,23 +1,28 @@
+#import <RemoteLog.h>
 #include "Tweak.h"
 #include "UtilityFunctions.h"
 
 /**
 * Load Preferences
 */
-BOOL hasCompletedIntroduction;
-BOOL noads;
-BOOL disablereadreceipt;
-BOOL disabletypingindicator;
-BOOL disablestoryseenreceipt;
-BOOL cansavefriendsstory;
-BOOL hidesearchbar;
-BOOL hidestoriesrow;
-BOOL hidepeopletab;
-BOOL hideSuggestedContactInSearch;
-BOOL showTheEyeButton;
-BOOL extendStoryVideoUploadLength;
-NSString *plistPath;
-NSMutableDictionary *settings;
+static BOOL hasCompletedIntroduction;
+static BOOL noads;
+static BOOL disablereadreceipt;
+static BOOL disabletypingindicator;
+static BOOL disablestoryseenreceipt;
+static BOOL cansavefriendsstory;
+static BOOL hidesearchbar;
+static BOOL hidestoriesrow;
+static BOOL hidepeopletab;
+static BOOL hideSuggestedContactInSearch;
+static BOOL showTheEyeButton;
+static BOOL extendStoryVideoUploadLength;
+static NSString *plistPath;
+static NSMutableDictionary *settings;
+
+static BOOL didHaveAccessory = NO;
+static LSMountableTableViewCell *mnaCell = nil;
+static MDSNavigationController *controller = nil;
 
 static void reloadPrefs() {
     plistPath = [[NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES) objectAtIndex:0] stringByAppendingPathComponent:@PLIST_FILENAME];
@@ -38,9 +43,6 @@ static void reloadPrefs() {
 }
 
 %group Settings
-static LSMountableTableViewCell *mnaCell = nil;
-static MDSNavigationController *controller = nil;
-
 %hook MDSNavigationController
 
 - (void)viewDidLoad {
@@ -51,11 +53,45 @@ static MDSNavigationController *controller = nil;
 %end
 
 %hook LSMountableTableViewCell
+%property (retain, nonatomic) MDSGeneratedImageView *arrowImage;
+%property (retain, nonatomic) UIButton *touchCapture;
 
-//TODO: Find a better way
 - (void)setBackgroundColor:(UIColor *)color {
     %orig;
     if (mnaCell.backgroundColor != color) mnaCell.backgroundColor = color;
+}
+
+- (void)setSelected:(BOOL)selected {
+    if (mnaCell) {
+        mnaCell.selectedBackgroundView.layer.cornerRadius = 10;
+        if (selected) {
+            [mnaCell addSubview:mnaCell.selectedBackgroundView];
+        } else {
+            [mnaCell.selectedBackgroundView removeFromSuperview];
+        }
+        return;
+    }
+    %orig;
+}
+
+%end
+
+%hook MDSGeneratedImageView
+
+- (void)setSpec:(NSObject <MDSGeneratedImageSpecProtocol> *)spec {
+    if (mnaCell && [spec isKindOfClass:%c(MDSGeneratedImageSpecIcon)] && !didHaveAccessory) {
+        didHaveAccessory = YES;
+        mnaCell.arrowImage.spec = spec;
+    }
+    %orig(spec);
+}
+
+%end
+
+%hook MSGContentSizeIgnoringTableView
+
+- (BOOL)touchesShouldCancelInContentView:(id)arg1 {
+    return YES;
 }
 
 %end
@@ -71,22 +107,29 @@ static MDSNavigationController *controller = nil;
             mnaCell.layoutMargins = UIEdgeInsetsMake(0, 18, 0, 16);
             mnaCell.frame = CGRectMake(20, 28, 374, 52);
             mnaCell.layer.cornerRadius = 10;
-            mnaCell.accessibilityLabel = @"Advanced Settings";
+            mnaCell.accessibilityLabel = @"Advanced options";
             mnaCell.imageView.image = IMAGE(@"icon@3x");
 
             MDSLabel *label = [[%c(MDSLabel) alloc] initWithFrame:CGRectMake(62, 16, 409.0f / 3.0f, 58.0f / 3.0f)];
             label.font = [UIFont systemFontOfSize:16];
-            label.text = @"Advanced Settings";
+            label.text = @"Advanced options";
 
             MDSGeneratedImageView *accessoryImage = [[%c(MDSGeneratedImageView) alloc] initWithFrame:CGRectMake(334, 13.5, 24, 25)];
-            NSArray *specColorType = @[@"MDSColorType", @0, @10082];
-            NSArray *specIconStyle = @[@"MDSGeneratedImageIconStyle", @0];
-            accessoryImage.spec = (MDSGeneratedImageSpec *)@[@"MDSGeneratedImageSpec", @9, @872221393, specColorType, specIconStyle];
+            mnaCell.arrowImage = accessoryImage;
 
-            [mnaCell addSubview:accessoryImage];
+            UIButton *touchCapture = [[UIButton alloc] initWithFrame:[mnaCell bounds]];
+            mnaCell.touchCapture = touchCapture;
+
             [mnaCell addSubview:label];
+            [mnaCell addSubview:accessoryImage];
+            [mnaCell addSubview:touchCapture];
+
+            mnaCell.selectedBackgroundView.layer.cornerRadius = 10;
         }
-        [mnaCell addGestureRecognizer:[[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(handleMNACellTap:)]];
+        tableView.delaysContentTouches = NO;
+        [mnaCell.touchCapture addTarget:self action:@selector(didPressMNACell:) forControlEvents:UIControlEventTouchDown];
+        [mnaCell.touchCapture addTarget:self action:@selector(cancelPressMNACell:) forControlEvents:UIControlEventTouchCancel];
+        [mnaCell.touchCapture addTarget:self action:@selector(didEndPressMNACell:) forControlEvents:UIControlEventTouchUpInside];
         [cell addSubview:mnaCell];
     }
     return cell;
@@ -116,10 +159,21 @@ static MDSNavigationController *controller = nil;
     %orig;
 }
 
-%new
-- (void)handleMNACellTap:(UITapGestureRecognizer *)recognizer {
-    MNASettingsViewController *settingsVC = [[MNASettingsViewController alloc] init];
+%new(v@:@@)
+- (void)didPressMNACell:(id)arg1 {
+    mnaCell.selected = YES;
+}
+
+%new(v@:@@)
+- (void)cancelPressMNACell:(id)arg1 {
+    mnaCell.selected = NO;
+}
+
+%new(v@:@@)
+- (void)didEndPressMNACell:(id)arg1 {
+    MNASettingsViewController *settingsVC = [[MNASettingsViewController alloc] initWithFrame:[UIScreen.mainScreen bounds] isDarkMode:YES];
     [controller pushViewController:settingsVC animated:YES];
+    mnaCell.selected = NO;
 }
 
 %end
@@ -154,9 +208,7 @@ static MDSNavigationController *controller = nil;
     self.sideSwitch.backgroundColor = [[UIColor grayColor] colorWithAlphaComponent:0.3];
     self.sideSwitch.layer.cornerRadius = 10;
     [self.sideSwitch addGestureRecognizer:[[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(handleSideSwitchTap:)]];
-    UIPanGestureRecognizer *panRecognizer = [[UIPanGestureRecognizer alloc] initWithTarget:self action:@selector(move:)];
-    //[panRecognizer setMaximumNumberOfTouches:1];
-    [self.sideSwitch addGestureRecognizer:panRecognizer];
+    [self.sideSwitch addGestureRecognizer:[[UIPanGestureRecognizer alloc] initWithTarget:self action:@selector(move:)]];
 
     self.imageView = [[UIImageView alloc] initWithFrame:CGRectMake(10, 10, 30, 30)];
     self.imageView.image = disablereadreceipt ? IMAGE(@"no-see") : IMAGE(@"see");
@@ -261,24 +313,11 @@ static MDSNavigationController *controller = nil;
 %end
 
 %group DisableReadReceipt
-// for Messenger pre v300.0
-%hook LSMessageListViewController
-
-- (void)_sendReadReceiptIfNeeded {
-    if (!disablereadreceipt) {
-        %orig;
-    }
-}
-
-%end
-
-// for Messenger v300.0 or later
 %hook MSGMessageListViewController
 
-- (void)_sendReadReceiptIfNeeded {
-    if (!disablereadreceipt) {
-        %orig;
-    }
+- (void)viewDidLoad {
+    %orig;
+    [self setValue:@(disablereadreceipt) forKey:@"_disableReadReceipts"];
 }
 
 %end

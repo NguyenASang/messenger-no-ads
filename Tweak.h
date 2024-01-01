@@ -65,21 +65,19 @@
 @interface LSComposerComponentStackView : UIView
 @end
 
-@interface MDSGeneratedImageSpec : NSArray
+@protocol MDSGeneratedImageSpecProtocol
 @end
 
 @interface MDSGeneratedImageView : UIImageView
-@property (nonatomic, strong, readwrite) MDSGeneratedImageSpec *spec;
+@property (nonatomic, strong, readwrite) NSObject <MDSGeneratedImageSpecProtocol> *spec;
 @end
 
 @interface MDSLabel : UILabel
 @end
 
 @interface LSMountableTableViewCell : UITableViewCell
-- (void)setMeasureFunction:(id)arg1;
-- (void)setLayoutSubviewsHook:(id)arg1;
-- (id)layoutSubviewsHook;
-- (id)measureFunction;
+@property (retain, nonatomic) MDSGeneratedImageView *arrowImage;
+@property (retain, nonatomic) UIButton *touchCapture;
 @end
 
 @interface MSGListBinder : NSObject <UITableViewDelegate, UITableViewDataSource, UICollectionViewDelegateFlowLayout, UICollectionViewDataSource>
@@ -88,4 +86,7 @@
 @interface LSContactListViewController : UIViewController {
     NSString *_featureIdentifier;
 }
+@end
+
+@interface MSGMessageListViewController : UIViewController
 @end

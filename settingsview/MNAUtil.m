@@ -1,5 +1,5 @@
-#include "UtilityFunctions.h"
 #include "MNAUtil.h"
+#include "UtilityFunctions.h"
 
 @implementation MNAUtil
 
