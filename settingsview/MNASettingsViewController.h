@@ -1,6 +1,6 @@
-#include "MNACellModel.h"
-#include "MNATableViewCell.h"
-#include "MNAUtil.h"
+#import "MNACellModel.h"
+#import "MNATableViewCell.h"
+#import "MNAUtil.h"
 
 @interface MNASettingsViewController : UIViewController <UITableViewDelegate, UITableViewDataSource> {
     UITableView *_tableView;

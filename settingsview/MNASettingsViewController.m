@@ -1,6 +1,6 @@
-#include "MNASettingsViewController.h"
-#include "TOInsetGroupedTableView.h"
-#include "UtilityFunctions.h"
+#import "MNASettingsViewController.h"
+#import "TOInsetGroupedTableView.h"
+#import "UtilityFunctions.h"
 
 @implementation MNASettingsViewController
 
@@ -17,26 +17,15 @@
         titleLabel.translatesAutoresizingMaskIntoConstraints = NO;
         titleLabel.font = [UIFont boldSystemFontOfSize:17];
         titleLabel.text = @"Messenger No Ads";
-        titleLabel.textColor = [UIColor whiteColor];
+        titleLabel.textColor = self.isDarkMode ? [UIColor whiteColor] : [UIColor blackColor];
         titleLabel.textAlignment = NSTextAlignmentCenter;
         [self.navigationItem.titleView addSubview:titleLabel];
-
-        iconView = [[UIImageView alloc] initWithFrame:CGRectMake(0, 0, 10, 10)];
-        iconView.translatesAutoresizingMaskIntoConstraints = NO;
-        iconView.contentMode = UIViewContentModeScaleAspectFit;
-        iconView.image = IMAGE(@"icon@2x");
-        iconView.alpha = 0.0;
-        [self.navigationItem.titleView addSubview:iconView];
 
         [NSLayoutConstraint activateConstraints:@[
             [titleLabel.topAnchor constraintEqualToAnchor:self.navigationItem.titleView.topAnchor],
             [titleLabel.leadingAnchor constraintEqualToAnchor:self.navigationItem.titleView.leadingAnchor],
             [titleLabel.trailingAnchor constraintEqualToAnchor:self.navigationItem.titleView.trailingAnchor],
             [titleLabel.bottomAnchor constraintEqualToAnchor:self.navigationItem.titleView.bottomAnchor],
-            [iconView.topAnchor constraintEqualToAnchor:self.navigationItem.titleView.topAnchor],
-            [iconView.leadingAnchor constraintEqualToAnchor:self.navigationItem.titleView.leadingAnchor],
-            [iconView.trailingAnchor constraintEqualToAnchor:self.navigationItem.titleView.trailingAnchor],
-            [iconView.bottomAnchor constraintEqualToAnchor:self.navigationItem.titleView.bottomAnchor],
         ]];
     }
     return self;
@@ -242,7 +231,6 @@
     if (cell == nil) {
         cell = [[MNATableViewCell alloc] initWithData:cellData reuseIdentifier:cellIdentifier isDarkMode:self.isDarkMode];
     }
-
     return cell;
 }
 
@@ -279,23 +267,6 @@
     [alert addAction:confirmAction];
     [alert addAction:cancelAction];
     [self presentViewController:alert animated:YES completion:nil];
-}
-
-- (void)scrollViewDidScroll:(UIScrollView *)scrollView {
-    CGFloat offsetY = scrollView.contentOffset.y;
-    if (offsetY > 200) {
-        [UIView animateWithDuration:0.2 animations:^{
-            iconView.alpha = 1.0;
-            titleLabel.alpha = 0.0;
-        }];
-    } else {
-        [UIView animateWithDuration:0.2 animations:^{
-            iconView.alpha = 0.0;
-            titleLabel.alpha = 1.0;
-        }];
-    }
-    if (offsetY > 0) offsetY = 0;
-    headerImageView.frame = CGRectMake(0, offsetY, headerView.frame.size.width, 200 - offsetY);
 }
 
 @end

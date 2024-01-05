@@ -1,4 +1,5 @@
 #import <Foundation/Foundation.h>
+#import <RemoteLog.h>
 #import <UIKit/UIKit.h>
 
 /* COLOR STUFFS */

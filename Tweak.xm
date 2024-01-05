@@ -1,10 +1,8 @@
-#import <RemoteLog.h>
-#include "Tweak.h"
-#include "UtilityFunctions.h"
+#import "Tweak.h"
+#import "UtilityFunctions.h"
 
-/**
-* Load Preferences
-*/
+#pragma mark - Global variables
+
 static BOOL hasCompletedIntroduction;
 static BOOL noads;
 static BOOL disablereadreceipt;
@@ -20,180 +18,31 @@ static BOOL extendStoryVideoUploadLength;
 static NSString *plistPath;
 static NSMutableDictionary *settings;
 
-static BOOL didHaveAccessory = NO;
-static LSMountableTableViewCell *mnaCell = nil;
-static MDSNavigationController *controller = nil;
+#pragma mark - Settings page
 
-static void reloadPrefs() {
-    plistPath = [[NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES) objectAtIndex:0] stringByAppendingPathComponent:@PLIST_FILENAME];
-    settings = [[NSMutableDictionary alloc] initWithContentsOfFile:plistPath] ?: [@{} mutableCopy];
-
-    hasCompletedIntroduction = [[settings objectForKey:@"hasCompletedIntroduction"] ?: @(NO) boolValue];
-    noads = [[settings objectForKey:@"noads"] ?: @(YES) boolValue];
-    disablereadreceipt = [[settings objectForKey:@"disablereadreceipt"] ?: @(YES) boolValue];
-    disabletypingindicator = [[settings objectForKey:@"disabletypingindicator"] ?: @(YES) boolValue];
-    disablestoryseenreceipt = [[settings objectForKey:@"disablestoryseenreceipt"] ?: @(YES) boolValue];
-    cansavefriendsstory = [[settings objectForKey:@"cansavefriendsstory"] ?: @(YES) boolValue];
-    hidesearchbar = [[settings objectForKey:@"hidesearchbar"] ?: @(NO) boolValue];
-    hidestoriesrow = [[settings objectForKey:@"hidestoriesrow"] ?: @(NO) boolValue];
-    hidepeopletab = [[settings objectForKey:@"hidepeopletab"] ?: @(NO) boolValue];
-    hideSuggestedContactInSearch = [[settings objectForKey:@"hideSuggestedContactInSearch"] ?: @(NO) boolValue];
-    showTheEyeButton = [[settings objectForKey:@"showTheEyeButton"] ?: @(YES) boolValue];
-    extendStoryVideoUploadLength = [[settings objectForKey:@"extendStoryVideoUploadLength"] ?: @(YES) boolValue];
-}
-
-%group Settings
 %hook MDSNavigationController
 
 - (void)viewDidLoad {
-    %orig;
-    controller = self;
-}
-
-%end
-
-%hook LSMountableTableViewCell
-%property (retain, nonatomic) MDSGeneratedImageView *arrowImage;
-%property (retain, nonatomic) UIButton *touchCapture;
-
-- (void)setBackgroundColor:(UIColor *)color {
-    %orig;
-    if (mnaCell.backgroundColor != color) mnaCell.backgroundColor = color;
-}
-
-- (void)setSelected:(BOOL)selected {
-    if (mnaCell) {
-        mnaCell.selectedBackgroundView.layer.cornerRadius = 10;
-        if (selected) {
-            [mnaCell addSubview:mnaCell.selectedBackgroundView];
-        } else {
-            [mnaCell.selectedBackgroundView removeFromSuperview];
-        }
-        return;
+    if ([self.navigationBar.topItem.customTitleView.accessibilityLabel isEqual:@"Settings"]) {
+        UIBarButtonItem *item = [[UIBarButtonItem alloc] initWithImage:IMAGE(@"gear-icon@3x") style:UIBarButtonItemStyleDone target:self action:@selector(openSettings:)];
+        self.navigationBar.topItem.customLeftItem = item;
     }
     %orig;
 }
 
-%end
-
-%hook MDSGeneratedImageView
-
-- (void)setSpec:(NSObject <MDSGeneratedImageSpecProtocol> *)spec {
-    if (mnaCell && [spec isKindOfClass:%c(MDSGeneratedImageSpecIcon)] && !didHaveAccessory) {
-        didHaveAccessory = YES;
-        mnaCell.arrowImage.spec = spec;
-    }
-    %orig(spec);
+%new(v@:@)
+- (void)openSettings:(id)arg1 {
+    MNASettingsViewController *settings = [[MNASettingsViewController alloc] initWithFrame:[UIScreen.mainScreen bounds] isDarkMode:YES];
+    [self pushViewController:settings animated:YES];
 }
 
 %end
 
-%hook MSGContentSizeIgnoringTableView
-
-- (BOOL)touchesShouldCancelInContentView:(id)arg1 {
-    return YES;
-}
-
-%end
-
-%hook MSGListBinder
-
-- (LSMountableTableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
-    LSMountableTableViewCell *cell = %orig;
-    NSMutableSet *_registeredReuseIdentifiers = MSHookIvar<NSMutableSet *>(self, "_registeredReuseIdentifiers");
-    if ([_registeredReuseIdentifiers containsObject:@"me_setting_avatar_header"] && indexPath.row == 1) {
-        if (!mnaCell) {
-            mnaCell = [[%c(LSMountableTableViewCell) alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:@"MNASettings"];
-            mnaCell.layoutMargins = UIEdgeInsetsMake(0, 18, 0, 16);
-            mnaCell.frame = CGRectMake(20, 28, 374, 52);
-            mnaCell.layer.cornerRadius = 10;
-            mnaCell.accessibilityLabel = @"Advanced options";
-            mnaCell.imageView.image = IMAGE(@"icon@3x");
-
-            MDSLabel *label = [[%c(MDSLabel) alloc] initWithFrame:CGRectMake(62, 16, 409.0f / 3.0f, 58.0f / 3.0f)];
-            label.font = [UIFont systemFontOfSize:16];
-            label.text = @"Advanced options";
-
-            MDSGeneratedImageView *accessoryImage = [[%c(MDSGeneratedImageView) alloc] initWithFrame:CGRectMake(334, 13.5, 24, 25)];
-            mnaCell.arrowImage = accessoryImage;
-
-            UIButton *touchCapture = [[UIButton alloc] initWithFrame:[mnaCell bounds]];
-            mnaCell.touchCapture = touchCapture;
-
-            [mnaCell addSubview:label];
-            [mnaCell addSubview:accessoryImage];
-            [mnaCell addSubview:touchCapture];
-
-            mnaCell.selectedBackgroundView.layer.cornerRadius = 10;
-        }
-        tableView.delaysContentTouches = NO;
-        [mnaCell.touchCapture addTarget:self action:@selector(didPressMNACell:) forControlEvents:UIControlEventTouchDown];
-        [mnaCell.touchCapture addTarget:self action:@selector(cancelPressMNACell:) forControlEvents:UIControlEventTouchCancel];
-        [mnaCell.touchCapture addTarget:self action:@selector(didEndPressMNACell:) forControlEvents:UIControlEventTouchUpInside];
-        [cell addSubview:mnaCell];
-    }
-    return cell;
-}
-
-- (CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath {
-    NSMutableSet *_registeredReuseIdentifiers = MSHookIvar<NSMutableSet *>(self, "_registeredReuseIdentifiers");
-    if ([_registeredReuseIdentifiers containsObject:@"me_setting_avatar_header"] && indexPath.row == 1) {
-        return 108;
-    }
-    return %orig;
-}
-
-- (void)tableView:(UITableView *)tableView didEndDisplayingCell:(LSMountableTableViewCell *)cell forRowAtIndexPath:(NSIndexPath *)indexPath {
-    NSMutableSet *_registeredReuseIdentifiers = MSHookIvar<NSMutableSet *>(self, "_registeredReuseIdentifiers");
-    if ([_registeredReuseIdentifiers containsObject:@"me_setting_avatar_header"] && indexPath.row == 1) {
-        mnaCell.hidden = YES;
-    }
-    %orig;
-}
-
-- (void)tableView:(UITableView *)tableView willDisplayCell:(LSMountableTableViewCell *)cell forRowAtIndexPath:(NSIndexPath *)indexPath {
-    NSMutableSet *_registeredReuseIdentifiers = MSHookIvar<NSMutableSet *>(self, "_registeredReuseIdentifiers");
-    if ([_registeredReuseIdentifiers containsObject:@"me_setting_avatar_header"] && indexPath.row == 1) {
-        mnaCell.hidden = NO;
-    }
-    %orig;
-}
-
-%new(v@:@@)
-- (void)didPressMNACell:(id)arg1 {
-    mnaCell.selected = YES;
-}
-
-%new(v@:@@)
-- (void)cancelPressMNACell:(id)arg1 {
-    mnaCell.selected = NO;
-}
-
-%new(v@:@@)
-- (void)didEndPressMNACell:(id)arg1 {
-    MNASettingsViewController *settingsVC = [[MNASettingsViewController alloc] initWithFrame:[UIScreen.mainScreen bounds] isDarkMode:YES];
-    [controller pushViewController:settingsVC animated:YES];
-    mnaCell.selected = NO;
-}
-
-%end
-%end
-
-/**
-* Tweak's hooking code
-*/
-%group CommonGroup
+#pragma mark - Button to quickly disable/enable read receipt
 
 %hook MDSSplitViewController
 %property (nonatomic, retain) UIView *sideSwitch;
 %property (nonatomic, retain) UIImageView *imageView;
-
-- (void)viewDidAppear:(BOOL)arg1 {
-    %orig;
-    if (!hasCompletedIntroduction) {
-        [self presentViewController:[MNAIntroViewController new] animated:YES completion:nil];
-    }
-}
 
 - (void)viewDidLoad {
     %orig;
@@ -267,52 +116,46 @@ static void reloadPrefs() {
 
 %end
 
+#pragma mark - Hide suggested contacts in search
+
 %hook LSContactListViewController
 
-- (void)_updateContactList {
+- (void)didLoadContactList:(NSArray *)list contactExtrasById:(NSDictionary *)extras {
     if (hideSuggestedContactInSearch) {
-        NSString *_featureIdentifier = MSHookIvar<NSString *>(self, "_featureIdentifier");
-        if ([_featureIdentifier isEqualToString:@"universal_search_null_state"]) {
-            return;
+        RLog(@"class = %@", NSStringFromClass([extras class]));
+        NSString *featureIdentifier = MSHookIvar<NSString *>(self, "_featureIdentifier");
+        if ([featureIdentifier isEqualToString:@"universal_search_null_state"]) {
+            return %orig(nil, nil);
         }
     }
     %orig;
 }
 
 %end
-%end
 
-%group NoAdsNoStoriesRow
+#pragma mark - Remove ads, stories row
+
 %hook MSGThreadListDataSource
 
 - (NSArray *)inboxRows {
-    NSArray *orig = %orig;
-    if (![orig count]) {
-        return orig;
-    }
+    NSArray *rows = %orig;
+    if ((!noads && !hidestoriesrow) || ![rows count]) return rows;
+
     NSMutableArray *resultRows = [@[] mutableCopy];
-    if (!(hidestoriesrow && [orig[0][2] isKindOfClass:[NSArray class]] && [orig[0][2][1] isEqual:@"montage_renderer"])) {
-        [resultRows addObject:orig[0]];
-    }
-    for (int i = 1; i < [orig count]; i++) {
-        NSArray *row = orig[i];
-        if (!noads || (noads && [row[1] intValue] != 2) || ([row[2] isKindOfClass:[NSArray class]] && [row[2][1] isEqual:@"message_requests_spam_unit"])) {
-        [resultRows addObject:row];
+    for (NSArray *row in rows) {
+        if ((noads && [row[2] isKindOfClass:%c(MSGInboxUnit)] && [[row[2] key] isEqualToString:@"ads_renderer"]) ||
+            (hidestoriesrow && [row[2] isKindOfClass:%c(MSGInboxUnit)] && [[row[2] key] isEqualToString:@"montage_renderer"])) {
+            continue;
         }
+        [resultRows addObject:row];
     }
     return resultRows;
 }
 
 %end
 
-%hook LSStoryViewerContentController
+#pragma mark - Disable read receipt
 
-- (void)_issueAdsFetchWithCurrentSync:(id)arg1 startIndex:(int)arg2 bucketStoryModels:(id)arg3 {}
-
-%end
-%end
-
-%group DisableReadReceipt
 %hook MSGMessageListViewController
 
 - (void)viewDidLoad {
@@ -321,9 +164,9 @@ static void reloadPrefs() {
 }
 
 %end
-%end
 
-%group DisableTypingIndicator
+#pragma mark - Disable typing indicator
+
 %hook LSComposerViewController
 
 - (void)_updateComposerEventWithTextViewChanged:(LSTextView *)arg1 {
@@ -340,9 +183,9 @@ static void reloadPrefs() {
 }
 
 %end
-%end
 
-%group DisableStorySeenReceipt
+#pragma mark - Disable story seen receipt
+
 %hook LSStoryBucketViewController
 
 - (void)startTimer {
@@ -352,9 +195,9 @@ static void reloadPrefs() {
 }
 
 %end
-%end
 
-%group CanSaveFriendsStory
+#pragma mark - Save friends' stories
+
 %hook LSStoryOverlayProfileView
 
 - (void)_handleOverflowMenuButton:(UIButton *)arg1 {
@@ -397,9 +240,9 @@ static void reloadPrefs() {
 }
 
 %end
-%end
 
-%group HidePeopleTab
+#pragma mark - Hide people tab
+
 %hook UITabBarController
 
 - (UITabBar *)tabBar {
@@ -411,9 +254,9 @@ static void reloadPrefs() {
 }
 
 %end
-%end
 
-%group HideSearchBar
+#pragma mark - Hide search bar
+
 %hook UINavigationController
 
 - (void)_createAndAttachSearchPaletteForTransitionToTopViewControllerIfNecesssary:(id)arg1 {
@@ -423,9 +266,9 @@ static void reloadPrefs() {
 }
 
 %end
-%end
 
-%group ExtendStoryVideoUploadLength
+#pragma mark - Extend story video upload duration
+
 %hook MSGVideoTrimmerPresenter
 
 - (id)presentIfPossibleWithNSURL:(id)arg1 videoMaximumDuration:(double)arg2 completion:(id)arg3 {
@@ -437,25 +280,29 @@ static void reloadPrefs() {
 }
 
 %end
-%end
 
-/**
-* Constructor
-*/
+static void reloadPrefs() {
+    plistPath = [[NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES) objectAtIndex:0] stringByAppendingPathComponent:@PLIST_FILENAME];
+    settings = [[NSMutableDictionary alloc] initWithContentsOfFile:plistPath] ?: [@{} mutableCopy];
+
+    hasCompletedIntroduction = [[settings objectForKey:@"hasCompletedIntroduction"] ?: @(NO) boolValue];
+    noads = [[settings objectForKey:@"noads"] ?: @(YES) boolValue];
+    disablereadreceipt = [[settings objectForKey:@"disablereadreceipt"] ?: @(YES) boolValue];
+    disabletypingindicator = [[settings objectForKey:@"disabletypingindicator"] ?: @(YES) boolValue];
+    disablestoryseenreceipt = [[settings objectForKey:@"disablestoryseenreceipt"] ?: @(YES) boolValue];
+    cansavefriendsstory = [[settings objectForKey:@"cansavefriendsstory"] ?: @(YES) boolValue];
+    hidesearchbar = [[settings objectForKey:@"hidesearchbar"] ?: @(NO) boolValue];
+    hidestoriesrow = [[settings objectForKey:@"hidestoriesrow"] ?: @(NO) boolValue];
+    hidepeopletab = [[settings objectForKey:@"hidepeopletab"] ?: @(NO) boolValue];
+    hideSuggestedContactInSearch = [[settings objectForKey:@"hideSuggestedContactInSearch"] ?: @(NO) boolValue];
+    showTheEyeButton = [[settings objectForKey:@"showTheEyeButton"] ?: @(YES) boolValue];
+    extendStoryVideoUploadLength = [[settings objectForKey:@"extendStoryVideoUploadLength"] ?: @(YES) boolValue];
+}
+
 %ctor {
     CFNotificationCenterAddObserver(CFNotificationCenterGetDarwinNotifyCenter(), NULL, (CFNotificationCallback) reloadPrefs, CFSTR(PREF_CHANGED_NOTIF), NULL, CFNotificationSuspensionBehaviorDeliverImmediately);
     reloadPrefs();
 
     dlopen([[[NSBundle mainBundle].bundlePath stringByAppendingPathComponent:@"Frameworks/NotInCore.framework/NotInCore"] UTF8String], RTLD_NOW);
-
-    %init(Settings);
-    %init(CommonGroup);
-    %init(NoAdsNoStoriesRow);
-    %init(DisableReadReceipt);
-    %init(DisableTypingIndicator);
-    %init(DisableStorySeenReceipt);
-    %init(CanSaveFriendsStory);
-    %init(HideSearchBar);
-    %init(HidePeopleTab);
-    %init(ExtendStoryVideoUploadLength);
+    %init;
 }

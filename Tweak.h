@@ -1,9 +1,8 @@
 #import <dlfcn.h>
 #import <Foundation/Foundation.h>
 #import <UIKit/UIKit.h>
-#include "settingsview/MNAIntroViewController.h"
-#include "settingsview/MNASettingsViewController.h"
-#include "settingsview/MNAUtil.h"
+#import "settingsview/MNASettingsViewController.h"
+#import "settingsview/MNAUtil.h"
 
 @interface LSAppDelegate : NSObject
 + (id)sharedInstance; // new methods
@@ -15,6 +14,16 @@
 @property (nonatomic, retain) UIView *sideSwitch; // new property
 @property (nonatomic, retain) UIImageView *imageView; // new property
 - (void)initEyeButton; // new method
+@end
+
+@interface MDSThemedNavigationBar : UINavigationBar
+@end
+
+@interface MDSNavigationBar : MDSThemedNavigationBar
+@end
+
+@interface UINavigationBar ()
+@property _UINavigationBarItemStack *_stack;
 @end
 
 @interface MDSNavigationController : UINavigationController
@@ -86,6 +95,98 @@
 @interface LSContactListViewController : UIViewController {
     NSString *_featureIdentifier;
 }
+@end
+
+typedef struct {
+    SEL loadView;
+    SEL viewDidLoad;
+    SEL viewWillAppear;
+    SEL viewDidAppear;
+    SEL viewWillDisappear;
+    SEL viewDidDisappear;
+    SEL viewWillLayoutSubviews;
+    SEL viewDidLayoutSubviews;
+    SEL preferredContentSize;
+    SEL shouldAutoRotate;
+    SEL supportedInterfaceOrientations;
+    SEL viewWillTransitionToSizeWithTransitionCoordinator;
+    SEL willTransitionToTraitCollectionWithTransitionCoordinator;
+    SEL shouldAutomaticallyForwardAppearanceMethods;
+    SEL willMoveToParentViewController;
+    SEL didMoveToParentViewController;
+    SEL updateViewConstraints;
+    SEL viewLayoutMarginsDidChange;
+    SEL viewSafeAreaInsetsDidChange;
+    SEL preferredContentSizeDidChangeForChildContentContainer;
+    SEL preferredStatusBarStyle;
+    SEL childViewControllerForStatusBarStyle;
+    SEL preferredStatusBarUpdateAnimation;
+    SEL prefersStatusBarHidden;
+    SEL modalPresentationCapturesStatusBarAppearance;
+    SEL accessibilityActivate;
+    SEL accessibilityIncrement;
+    SEL accessibilityScroll;
+    SEL accessibilityPerformEscape;
+    SEL dealloc;
+    SEL accessibilityValue;
+    SEL accessibilityLabel;
+    SEL accessibilityHint;
+    SEL debugDescription;
+    SEL preferredScreenEdgesDeferringSystemGestures;
+    SEL childViewControllerForScreenEdgesDeferringSystemGestures;
+    SEL traitCollectionDidChange;
+    SEL surfaceTags;
+} LSViewControllerFuncTable;
+
+//? Maybe this will be neccessary later
+/*
+LSViewControllerFuncTable MakeInitialFuncTable() {
+    LSViewControllerFuncTable funcTable;
+    funcTable.loadView = @selector(loadView);
+    funcTable.viewDidLoad = @selector(viewDidLoad);
+    funcTable.viewWillAppear = @selector(viewWillAppear:);
+    funcTable.viewDidAppear = @selector(viewDidAppear:);
+    funcTable.viewWillDisappear = @selector(viewWillDisappear:);
+    funcTable.viewDidDisappear = @selector(viewDidDisappear:);
+    funcTable.viewWillLayoutSubviews = @selector(viewWillLayoutSubviews);
+    funcTable.viewDidLayoutSubviews = @selector(viewDidLayoutSubviews);
+    funcTable.preferredContentSize = @selector(preferredContentSize);
+    funcTable.shouldAutoRotate = @selector(shouldAutoRotate);
+    funcTable.supportedInterfaceOrientations = @selector(supportedInterfaceOrientations);
+    funcTable.viewWillTransitionToSizeWithTransitionCoordinator = @selector(viewWillTransitionToSize:withTransitionCoordinator:);
+    funcTable.willTransitionToTraitCollectionWithTransitionCoordinator = @selector(willTransitionToTraitCollection:withTransitionCoordinator:);
+    funcTable.shouldAutomaticallyForwardAppearanceMethods = @selector(shouldAutomaticallyForwardAppearanceMethods);
+    funcTable.willMoveToParentViewController = @selector(willMoveToParentViewController:);
+    funcTable.didMoveToParentViewController = @selector(didMoveToParentViewController:);
+    funcTable.updateViewConstraints = @selector(updateViewConstraints);
+    funcTable.viewLayoutMarginsDidChange = @selector(viewLayoutMarginsDidChange);
+    funcTable.viewSafeAreaInsetsDidChange = @selector(viewSafeAreaInsetsDidChange);
+    funcTable.preferredContentSizeDidChangeForChildContentContainer = @selector(preferredContentSizeDidChangeForChildContentContainer:);
+    funcTable.preferredStatusBarStyle = @selector(preferredStatusBarStyle);
+    funcTable.childViewControllerForStatusBarStyle = @selector(childViewControllerForStatusBarStyle);
+    funcTable.preferredStatusBarUpdateAnimation = @selector(preferredStatusBarUpdateAnimation);
+    funcTable.prefersStatusBarHidden = @selector(prefersStatusBarHidden);
+    funcTable.modalPresentationCapturesStatusBarAppearance = @selector(modalPresentationCapturesStatusBarAppearance);
+    funcTable.accessibilityActivate = @selector(accessibilityActivate);
+    funcTable.accessibilityIncrement = @selector(accessibilityIncrement);
+    funcTable.accessibilityScroll = @selector(accessibilityScroll:);
+    funcTable.accessibilityPerformEscape = @selector(accessibilityPerformEscape);
+    //funcTable.dealloc = @selector(dealloc);
+    funcTable.accessibilityValue = @selector(accessibilityValue);
+    funcTable.accessibilityLabel = @selector(accessibilityLabel);
+    funcTable.accessibilityHint = @selector(accessibilityHint);
+    funcTable.debugDescription = @selector(debugDescription);
+    funcTable.preferredScreenEdgesDeferringSystemGestures = @selector(preferredScreenEdgesDeferringSystemGestures);
+    funcTable.childViewControllerForScreenEdgesDeferringSystemGestures = @selector(childViewControllerForScreenEdgesDeferringSystemGestures);
+    funcTable.traitCollectionDidChange = @selector(traitCollectionDidChange:);
+    funcTable.surfaceTags = @selector(surfaceTags);
+
+    return funcTable;
+}
+*/
+
+@interface LSViewController : UIViewController
+- (instancetype)initWithFuncTable:(LSViewControllerFuncTable)funcTable className:(const char *)name;
 @end
 
 @interface MSGMessageListViewController : UIViewController
